@@ -1,5 +1,7 @@
 const User = require('../models/user.model');
+const fs = require('fs');
 
+// upload the profile image based on the authenticated user
 const uploadProfileImage = async (req, res) => {
   try {
     // validate file presence
@@ -30,4 +32,41 @@ const uploadProfileImage = async (req, res) => {
   }
 };
 
-module.exports = { uploadProfileImage };
+//get the profile image based on the user request
+const getProfileImage = async (req, res) => {
+  try {
+    const userId = req.user._id; //query the user id to find the url of the profile
+
+    const user = await User.findById({ _id: userId }).select('-password');
+
+    if (!user) {
+      return res.status(400).json({
+        msg: 'User not found',
+        success: false,
+      });
+    }
+
+    try {
+      const imageType = user.profileImageUrl.split('.').pop();
+
+      fs.readFile(`${user.profileImageUrl}`, (err, data) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).send('Error retrieving image');
+        }
+
+        // Set the appropriate content type based on the image format
+        res.setHeader('Content-Type', `image/${imageType}`); // Adjust for other formats like PNG, etc.
+        res.send(data);
+      });
+    } catch (err) {
+      return res
+        .status(400)
+        .json({ msg: "The profile image doesn't exist", success: false });
+    }
+  } catch (err) {
+    res.status(500).json({ msg: 'Internal Server Error', success: false });
+  }
+};
+
+module.exports = { uploadProfileImage, getProfileImage };

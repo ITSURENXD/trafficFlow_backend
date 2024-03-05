@@ -20,6 +20,7 @@ passport.use(
           _id: user._id,
           email: user.email,
           username: user.username,
+          profileImageUrl: user.profileImageUrl,
         };
         return done(null, safeUser);
       } else {
